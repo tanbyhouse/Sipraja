@@ -1,6 +1,5 @@
-# import bcrypt
 from connectdb import get_connection
-
+from admin import daftar_pesanan,daftar_alat_berat,lihat_histori
 def register():
     conn = get_connection()
     cur = conn.cursor()
@@ -16,7 +15,6 @@ def register():
     if cur.fetchone():
         print("Username sudah digunakan.")
     else:
-        # hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         cur.execute("INSERT INTO customer (username, password, nama_customer, no_telepon_customer, alamat) VALUES (%s, %s,%s, %s,%s)", (username, password, nama, no_telepon, alamat))
         conn.commit()
         print("Registrasi berhasil!")
@@ -38,7 +36,6 @@ def login():
     if admin_result:
         stored_pw = admin_result[0]
         if password == stored_pw:
-        # if bcrypt.checkpw(password.encode(), stored_pw.encode()):
             conn.close()
             return (username, 'admin')
         else:
@@ -52,7 +49,6 @@ def login():
     if cust_result:
         stored_pw = cust_result[0]
         if password == stored_pw:
-        # if bcrypt.checkpw(password.encode(), stored_pw.encode()):
             conn.close()
             return (username, 'customer')
         else:
@@ -71,12 +67,28 @@ def autentikasi(username, role):
         customer_menu(username)
 
 def admin_menu(username):
-    print(f"\n[ADMIN] Selamat datang, {username}!")
-    print("1.Akses Daftar Pesanan")
-    print("2.Akses Daftar Alat Berat")
-    print("3.Lihat Histori Pesanan")
-    input("Tekan enter untuk kembali...")
-
+    while True:
+        print(f"\n[ADMIN] \nSelamat datang, {username}!")
+        print("1.Akses Daftar Pesanan")
+        print("2.Akses Daftar Alat Berat")
+        print("3.Lihat Histori Pesanan")
+        print("4.Keluar")
+        pilihan = input("\n\nPilih menu: ")
+    
+        if pilihan == "1":
+            daftar_pesanan()
+        elif pilihan == "2":
+            daftar_alat_berat()  
+        elif pilihan == "3":
+            lihat_histori() 
+        elif pilihan == "4":
+            print("Keluar dari admin menu...")
+            break
+        else:
+            print("Pilihan tidak valid. Coba lagi.")
+    
+      
+    
 def customer_menu(username):
     print(f"\n[CUSTOMER] Selamat datang, {username}!")
     input("Tekan enter untuk kembali...")
