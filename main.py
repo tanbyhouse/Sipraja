@@ -1,5 +1,5 @@
 from connectdb import get_connection
-from admin import daftar_pesanan,daftar_alat_berat,lihat_histori
+from admin import daftar_pesanan,daftar_alat_berat,lihat_histori, tambah_alat, hapus_alat, ubah_alat
 def register():
     conn = get_connection()
     cur = conn.cursor()
@@ -79,6 +79,19 @@ def admin_menu(username):
             daftar_pesanan()
         elif pilihan == "2":
             daftar_alat_berat()  
+            print("\n1.Tambah Alat Berat")
+            print("2.Hapus Alat Berat")
+            print("3.Edit Alat Berat")
+            print("4.Kembali ke menu utama")
+            pilihan_alat = input("\nPilih menu: ")
+            if pilihan_alat == "1":
+                tambah_alat()
+            elif pilihan_alat == "2":
+                hapus_alat()
+            elif pilihan_alat == "3":
+                ubah_alat()
+            elif pilihan_alat == "4":
+                continue
         elif pilihan == "3":
             lihat_histori() 
         elif pilihan == "4":
@@ -87,7 +100,6 @@ def admin_menu(username):
         else:
             print("Pilihan tidak valid. Coba lagi.")
     
-      
     
 def customer_menu(username):
     print(f"\n[CUSTOMER] Selamat datang, {username}!")
