@@ -1,4 +1,4 @@
-import bcrypt
+# import bcrypt
 from connectdb import get_connection
 
 def register():
@@ -16,8 +16,8 @@ def register():
     if cur.fetchone():
         print("Username sudah digunakan.")
     else:
-        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-        cur.execute("INSERT INTO customer (username, password, nama_customer, no_telepon_customer, alamat) VALUES (%s, %s,%s, %s,%s)", (username, hashed))
+        # hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        cur.execute("INSERT INTO customer (username, password, nama_customer, no_telepon_customer, alamat) VALUES (%s, %s,%s, %s,%s)", (username, hashed,nama,no_telepon,alamat))
         conn.commit()
         print("Registrasi berhasil!")
 
@@ -36,8 +36,9 @@ def login():
     conn.close()
 
     if admin_result:
-        stored_pw, role = admin_result[0]
-        if bcrypt.checkpw(password.encode(), stored_pw.encode()):
+        stored_pw = admin_result[0]
+        if password == stored_pw:
+        # if bcrypt.checkpw(password.encode(), stored_pw.encode()):
             conn.close()
             return (username, 'admin')
         else:
@@ -50,7 +51,8 @@ def login():
     
     if cust_result:
         stored_pw = cust_result[0]
-        if bcrypt.checkpw(password.encode(), stored_pw.encode()):
+        if password == stored_pw:
+        # if bcrypt.checkpw(password.encode(), stored_pw.encode()):
             conn.close()
             return (username, 'customer')
         else:
@@ -78,3 +80,24 @@ def admin_menu(username):
 def customer_menu(username):
     print(f"\n[CUSTOMER] Selamat datang, {username}!")
     input("Tekan enter untuk kembali...")
+
+if __name__ == "__main__":
+    while True:
+        print("\n=== SIPRAJA: APLIKASI PENYEWAAN ALAT BERAT ===")
+        print("1. Login")
+        print("2. Register")
+        print("3. Keluar")
+        pilihan = input("Pilih menu: ")
+
+        if pilihan == "1":
+            user_login = login()
+            if user_login:
+                username, role = user_login
+                autentikasi(username, role)
+        elif pilihan == "2":
+            register()
+        elif pilihan == "3":
+            print("Keluar dari aplikasi.")
+            break
+        else:
+            print("Pilihan tidak valid.")
