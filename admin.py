@@ -11,13 +11,15 @@ def daftar_pesanan():
     
     print("\n=== Daftar Pesanan Masuk ===")
     query = """
-        SELECT p.id_penyewaan, c.nama_customer, c.no_telepon_customer, c.alamat, p.tanggal_pemesanan, p.tanggal_mulai_sewa, p.tanggal_selesai_sewa,
-        p.total_harga, sp.status_penyewaan, a.nama_alat_berat
+        SELECT p.id_penyewaan, c.nama_customer, c.no_telepon_customer, c.alamat, p.tanggal_pemesanan, p.tanggal_mulai_sewa,
+        p.total_harga, a.nama_alat_berat, sp.status_penyewaan, sb.status 
         FROM penyewaan p
         JOIN customer c ON p.id_customer = c.id_customer
         JOIN status_penyewaan sp ON p.id_status_penyewaan = sp.id_status_penyewaan
         JOIN detail_penyewaan dp ON p.id_penyewaan = dp.id_penyewaan
         JOIN alat_berat a ON dp.id_alat_berat = a.id_alat_berat
+        JOIN transaksi t ON p.id_penyewaan = t.id_penyewaan
+        JOIN status_pembayaran sb ON t.id_status_pembayaran = sb.id_status_pembayaran
         ORDER BY p.tanggal_pemesanan DESC
     """
     cur.execute(query)
@@ -62,16 +64,17 @@ def daftar_pesanan():
 def tampilkan_pesanan(results):
     headers = [
         "ID","Nama", "No Telepon", "Alamat",
-        "Tgl Pemesanan", "Tgl Sewa", "Tgl Selesai Sewa", "Total",
-        "Status", "Alat Berat"
+        "Tgl Pemesanan", "Tgl Sewa", "Total",
+        "Alat Berat", "Status Sewa", "Status Pembayaran" 
     ]
     
     formatted_results = []
     for row in results:
         formatted_row = list(row)
-        formatted_row[9] = bungkus_teks(formatted_row[9], 15)
-        formatted_row[3] = bungkus_teks(formatted_row[3], 15)
-        formatted_row[7] = f"Rp {int(formatted_row[7]):,}".replace(",", ".") 
+        formatted_row[8] = bungkus_teks(formatted_row[8], 10)
+        formatted_row[3] = bungkus_teks(formatted_row[3], 10)
+        formatted_row[7] = bungkus_teks(formatted_row[7], 7)
+        formatted_row[6] = f"Rp {int(formatted_row[6]):,}".replace(",", ".") 
         formatted_results.append(formatted_row)
 
     print(tabulate(formatted_results, headers=headers, tablefmt="fancy_grid", stralign="center",numalign="center"))
@@ -117,7 +120,7 @@ def lihat_histori():
     
     print("\n=== Histori Pesanan ===")
     query = """
-        SELECT t.tanggal_pembayaran, c.nama_customer, t.jumlah_pembayaran, pg.tanggal_pengembalian,
+        SELECT t.id_transaksi, t.tanggal_pembayaran, c.nama_customer, t.jumlah_pembayaran, pg.tanggal_pengembalian,
             a.nama_alat_berat, sp.status_penyewaan, sb.status
         FROM transaksi t
         JOIN penyewaan p ON t.id_penyewaan = p.id_penyewaan
@@ -127,8 +130,9 @@ def lihat_histori():
         JOIN status_penyewaan sp ON p.id_status_penyewaan = sp.id_status_penyewaan
         JOIN detail_penyewaan dp ON p.id_penyewaan = dp.id_penyewaan
         JOIN alat_berat a ON dp.id_alat_berat = a.id_alat_berat
+        WHERE sp.status_penyewaan IN ('Selesai', 'Ditolak') and sb.status = 'Lunas'
         GROUP BY 
-            t.tanggal_pembayaran, c.nama_customer, t.jumlah_pembayaran,
+            t.id_transaksi, t.tanggal_pembayaran, c.nama_customer, t.jumlah_pembayaran,
             pg.tanggal_pengembalian, a.nama_alat_berat, sp.status_penyewaan, sb.status
         ORDER BY t.tanggal_pembayaran DESC
     """
@@ -137,6 +141,34 @@ def lihat_histori():
     
     if results:
         tampilkan_histori(results)
+    #     id_pilih = input("\nMasukkan ID pesanan yang ingin diproses (atau tekan Enter untuk kembali): ")
+    #     if id_pilih:
+    #         print("1.Belum Dibayar\n2.DP\n3.Menunggu Konfirmasi\n4.Lunas")
+    #         pilihan = input("Pilih status baru (1-4): ")
+    #         status_mapping = {
+    #             "1": "Belum Dibayar",
+    #             "2": "DP",
+    #             "3": "Menunggu Konfirmasi",
+    #             "4": "Lunas"
+    #         }
+    #         if pilihan in status_mapping:
+    #             new_status = status_mapping[pilihan]
+                
+    #             cur.execute("""
+    #                 UPDATE transaksi
+    #                 SET id_status_pembayaran = (SELECT id_status_pembayaran
+    #                     FROM status_pembayaran
+    #                     WHERE status = %s
+    #                 )
+    #                 WHERE id_transaksi = %s
+    #             """, (new_status, id_pilih))
+
+    #             conn.commit()
+    #             print(f"Status pembayaran dengan ID {id_pilih} berhasil diubah menjadi '{new_status}'.")
+    #         else:
+    #             print("Pilihan status tidak valid.")
+    #     else:
+    #         print("Tidak ada ID transaksi yang dipilih.")
     else:
         print("Tidak ada histori pesanan.")
     input("Tekan Enter untuk kembali ke menu...")
@@ -144,14 +176,14 @@ def lihat_histori():
     
 def tampilkan_histori(results):
     headers = [
-        "Tgl Pembayaran", "Nama", "Total",
+        "ID", "Tgl Pembayaran", "Nama", "Total",
         "Tgl Pengembalian", "Alat", "Status Sewa", "Status Pembayaran"
     ]
     
     formatted_results = []
     for row in results:
         formatted_row = list(row)
-        formatted_row[2] = f"Rp {int(float(formatted_row[2])):,}".replace(",", ".")
+        formatted_row[3] = f"Rp {int(float(formatted_row[3])):,}".replace(",", ".")
         formatted_results.append(formatted_row)
 
     print(tabulate(formatted_results, headers=headers, tablefmt="fancy_grid", stralign="center",numalign="center"))
